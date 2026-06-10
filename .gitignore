@@ -1,0 +1,40 @@
+# =========================
+# CI4 Core
+# =========================
+/vendor/
+/writable/cache/
+/writable/logs/
+/writable/session/
+/writable/uploads/
+/writable/debugbar/
+
+# =========================
+# Environment
+# =========================
+.env
+.env.*
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# =========================
+# Logs
+# =========================
+*.log
+ writable/logs/*
+!writable/logs/index.html
+
+# =========================
+# Composer
+# =========================
+composer.phar
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
