@@ -10,23 +10,28 @@ class CreateOrganizationUsers extends Migration
     {
         $this->forge->addField([
             'id' => [
-                'type' => 'INT',
-                'unsigned' => true,
+                'type'           => 'INT',
+                'unsigned'       => true,
                 'auto_increment' => true,
             ],
+
             'organization_id' => [
-                'type' => 'INT',
+                'type'     => 'INT',
                 'unsigned' => true,
             ],
+
             'user_id' => [
-                'type' => 'INT',
+                'type'     => 'INT',
                 'unsigned' => true,
+                'comment'  => 'Reserved for Shield/Identity integration in Professional edition',
             ],
+
             'role' => [
-                'type' => 'VARCHAR',
+                'type'       => 'VARCHAR',
                 'constraint' => 50,
-                'default' => 'member',
+                'default'    => 'member',
             ],
+
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
@@ -34,17 +39,42 @@ class CreateOrganizationUsers extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->addKey(['organization_id']);
-        $this->forge->addKey(['user_id']);
 
-        $this->forge->addForeignKey('organization_id', 'organizations', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('user_id', 'users', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addKey('organization_id');
+        $this->forge->addKey('user_id');
+
+        /**
+         * Starter Edition:
+         * organizations exists in Starter.
+         */
+        $this->forge->addForeignKey(
+            'organization_id',
+            'organizations',
+            'id',
+            'CASCADE',
+            'CASCADE'
+        );
+
+        /**
+         * Professional Edition:
+         * users table comes from Shield.
+         *
+         * Disabled in Starter to avoid migration failures
+         * on fresh installations.
+         */
+        // $this->forge->addForeignKey(
+        //     'user_id',
+        //     'users',
+        //     'id',
+        //     'CASCADE',
+        //     'CASCADE'
+        // );
 
         $this->forge->createTable('organization_users');
     }
 
     public function down()
     {
-        $this->forge->dropTable('organization_users');
+        $this->forge->dropTable('organization_users', true);
     }
 }

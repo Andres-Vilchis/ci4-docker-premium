@@ -3,26 +3,14 @@ FROM php:8.2-fpm
 RUN apt-get update && apt-get install -y \
     git unzip zip curl supervisor \
     libzip-dev libpng-dev libicu-dev \
-    && docker-php-ext-configure intl \
-    && docker-php-ext-install -j$(nproc) \
-        intl \
-        pdo_mysql \
-        mysqli \
-        zip \
-        gd
+    && docker-php-ext-install intl pdo_mysql mysqli zip gd
 
-RUN pecl install redis \
-    && docker-php-ext-enable redis
+RUN pecl install redis && docker-php-ext-enable redis
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-RUN mkdir -p /tmp/composer
-
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
-RUN mkdir -p /var/www/html/writable/session \
-    && mkdir -p /var/www/html/writable/cache \
-    && mkdir -p /var/www/html/writable/logs \
-    && chown -R www-data:www-data /var/www/html/writable
+CMD ["php-fpm"]

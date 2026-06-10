@@ -64,23 +64,14 @@ class Cache extends BaseConfig
     {
         parent::__construct();
 
-        $this->handler = env('cache.handler', 'redis');
-        $this->backupHandler = env('cache.backupHandler', 'dummy');
-        $this->prefix = env('cache.prefix', 'ci4_');
-        $this->ttl = (int) env('cache.ttl', 60);
+        $this->handler = 'redis';
+        $this->backupHandler = 'file';
+        $this->prefix = 'ci4_';
 
-        $this->redis['host'] = env('cache.redis.host') ?: $this->detectRedisHost();
+        $this->redis['host'] = env('cache.redis.host', 'redis');
         $this->redis['port'] = (int) env('cache.redis.port', 6379);
-        $this->redis['password'] = env('cache.redis.password', null);
-        $this->redis['database'] = (int) env('cache.redis.database', 0);
-        $this->redis['timeout'] = (float) env('cache.redis.timeout', 2.0);
-
-        $this->cacheQueryString = env('cache.queryString', false);
-
-        $this->cacheStatusCodes = array_map(
-            'intval',
-            explode(',', env('cache.statusCodes', '200'))
-        );
+        $this->redis['timeout'] = 2.0;
+        $this->redis['database'] = 0;
     }
 
     private function detectRedisHost(): string

@@ -2,19 +2,41 @@
 
 namespace App\Controllers;
 
-use App\Libraries\SystemHealth;
 use CodeIgniter\RESTful\ResourceController;
+use Throwable;
 
 class Health extends ResourceController
 {
     public function index()
     {
-        $data = SystemHealth::check();
+        $status = [
+            'app' => 'ok',
+            'database' => 'unknown',
+            'redis' => 'unknown',
+        ];
 
-        $statusCode = $data['status'] === 'healthy' ? 200 : 503;
+        // DB SAFE CHECK
+        try {
+            $db = \Config\Database::connect();
+            $db->query('SELECT 1');
+            $status['database'] = 'ok';
+        } catch (Throwable $e) {
+            $status['database'] = 'fail';
+        }
 
-        return $this->response
-            ->setStatusCode($statusCode)
-            ->setJSON($data);
+        // REDIS SAFE CHECK
+        try {
+            $redis = new \Redis();
+            $redis->connect(
+                env('cache.redis.host', 'redis'),
+                (int) env('cache.redis.port', 6379),
+                1.5
+            );
+            $status['redis'] = $redis->ping() ? 'ok' : 'fail';
+        } catch (Throwable $e) {
+            $status['redis'] = 'fail';
+        }
+
+        return $this->response->setJSON($status);
     }
 }

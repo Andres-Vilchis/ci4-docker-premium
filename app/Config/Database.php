@@ -72,38 +72,20 @@ class Database extends Config
     ];
 
     public function __construct()
-    {
-        parent::__construct();
+{
+    parent::__construct();
 
-        /**
-         * 🔥 ENVIRONMENT SWITCH CORE (PRODUCT FEATURE)
-         */
+    $this->default['hostname'] = env('database.default.hostname', 'mysql');
+    $this->default['database']  = env('database.default.database', 'ci4');
+    $this->default['username']  = env('database.default.username', 'ci4');
+    $this->default['password']  = env('database.default.password', 'ci4');
+    $this->default['port']      = 3306;
 
-        $this->default['hostname'] = env('database.default.hostname', $this->detectHost());
-        $this->default['database'] = env('database.default.database', 'ci4_app');
-        $this->default['username'] = env('database.default.username', 'ci4');
-        $this->default['password'] = env('database.default.password', 'secret');
-        $this->default['port']     = (int) env('database.default.port', 3306);
-        $this->default['DBDriver'] = env('database.default.DBDriver', 'MySQLi');
-
-        /**
-         * DEBUG MODE CONTROLLED BY ENV
-         */
-        $this->default['DBDebug'] = filter_var(
-            env('database.default.DBDebug', false),
-            FILTER_VALIDATE_BOOLEAN
-        );
-
-        /**
-         * AUTO SWITCH TEST ENVIRONMENT
-         */
-        if (ENVIRONMENT === 'testing') {
-            $this->defaultGroup = 'tests';
-        }
-    }
+    $this->default['DBDebug'] = (ENVIRONMENT !== 'production');
+}
 
     /**
-     * 🔥 SMART DOCKER / LOCAL DETECTION
+     * MART DOCKER / LOCAL DETECTION
      */
     private function detectHost(): string
     {
