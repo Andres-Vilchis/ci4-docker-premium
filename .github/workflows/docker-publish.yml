@@ -1,0 +1,28 @@
+name: Docker Publish Latest
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+
+      - name: Build image
+        run: docker build -t ci4-starter:latest .
+
+      - name: Tag image
+        run: docker tag ci4-starter:latest ${{ secrets.DOCKER_USER }}/ci4-starter:latest
+
+      - name: Push image
+        run: docker push ${{ secrets.DOCKER_USER }}/ci4-starter:latest

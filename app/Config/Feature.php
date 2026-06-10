@@ -5,33 +5,135 @@ namespace Config;
 use CodeIgniter\Config\BaseConfig;
 
 /**
- * Enable/disable backward compatibility breaking features.
+ * FEATURE FLAGS SYSTEM (PRODUCT LAYER)
+ *
+ * This file controls behavior:
+ * - Framework
+ * - Product
+ * - toggles
  */
 class Feature extends BaseConfig
 {
-    /**
-     * Use improved new auto routing instead of the legacy version.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | CI4 CORE FEATURES (COMPATIBILITY LAYER)
+    |--------------------------------------------------------------------------
+    */
+
     public bool $autoRoutesImproved = true;
-
-    /**
-     * Use filter execution order in 4.4 or before.
-     */
     public bool $oldFilterOrder = false;
-
-    /**
-     * The behavior of `limit(0)` in Query Builder.
-     *
-     * If true, `limit(0)` returns all records. (the behavior of 4.4.x or before in version 4.x.)
-     * If false, `limit(0)` returns no records. (the behavior of 3.1.9 or later in version 3.x.)
-     */
     public bool $limitZeroAsAll = true;
+    public bool $strictLocaleNegotiation = false;
+
+    /*
+    |--------------------------------------------------------------------------
+    | PRODUCT FEATURE FLAGS (STARTER KIT VALUE LAYER)
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Use strict location negotiation.
-     *
-     * By default, the locale is selected based on a loose comparison of the language code (ISO 639-1)
-     * Enabling strict comparison will also consider the region code (ISO 3166-1 alpha-2).
+     * Redis cache system
      */
-    public bool $strictLocaleNegotiation = false;
+    public bool $cacheEnabled = true;
+
+    /**
+     * Queue system (Daycry Queues)
+     */
+    public bool $queueEnabled = true;
+
+    /**
+     * Sentry error tracking
+     */
+    public bool $sentryEnabled = false;
+
+    /**
+     * Healthcheck endpoint (/health)
+     */
+    public bool $healthCheckEnabled = true;
+
+    /**
+     * Debug mode visual tools (toolbar, verbose logs)
+     */
+    public bool $debugMode = true;
+
+    /**
+     * API rate limiting system
+     */
+    public bool $rateLimitEnabled = false;
+
+    /**
+     * Maintenance mode override
+     */
+    public bool $maintenanceMode = false;
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONSTRUCTOR (ENV-DRIVEN SYSTEM)
+    |--------------------------------------------------------------------------
+    */
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        /**
+         * ENV OVERWRITE SYSTEM (CRITICAL FOR PRODUCT)
+         */
+
+        $this->cacheEnabled = filter_var(
+            env('feature.cache_enabled', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        $this->queueEnabled = filter_var(
+            env('feature.queue_enabled', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        $this->sentryEnabled = filter_var(
+            env('feature.sentry_enabled', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        $this->healthCheckEnabled = filter_var(
+            env('feature.healthcheck_enabled', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        $this->debugMode = filter_var(
+            env('feature.debug_mode', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        $this->rateLimitEnabled = filter_var(
+            env('feature.rate_limit_enabled', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        $this->maintenanceMode = filter_var(
+            env('feature.maintenance_mode', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | HELPERS (OPTIONAL BUT POWERFUL)
+    |--------------------------------------------------------------------------
+    */
+
+    public function isProductionSafe(): bool
+    {
+        return !$this->debugMode && !$this->maintenanceMode;
+    }
+
+    public function isObservabilityEnabled(): bool
+    {
+        return $this->sentryEnabled || $this->debugMode;
+    }
+
+    public function isQueueSystemActive(): bool
+    {
+        return $this->queueEnabled && !$this->maintenanceMode;
+    }
 }

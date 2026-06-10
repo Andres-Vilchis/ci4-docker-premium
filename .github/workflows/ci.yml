@@ -1,0 +1,67 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ci4_test
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, intl, pdo_mysql, redis
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Copy env
+        run: cp .env.example .env
+
+      - name: Run migrations
+        run: php spark migrate --all
+
+      - name: PHPUnit tests
+        run: vendor/bin/phpunit
+
+      - name: PHPStan analysis
+        run: vendor/bin/phpstan analyse
+
+      - name: Rector dry-run
+        run: vendor/bin/rector process --dry-run
+
+      - name: Create CI success signal
+        run: echo "CI_OK=true" > ci_status.txt
+
+      - name: Upload CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-status
+          path: ci_status.txt
