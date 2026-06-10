@@ -1,10 +1,12 @@
 # =========================
 # CI4 DOCKER PREMIUM KIT
-# PRODUCT ENTRYPOINT
+# SAAS-GRADE MAKEFILE
 # =========================
 
+APP_ENV ?= development
+
 # -------------------------
-# SETUP (ONBOARDING)
+# SETUP
 # -------------------------
 setup:
 	@bash scripts/setup.sh
@@ -40,16 +42,24 @@ bash:
 	docker compose exec php bash
 
 # -------------------------
-# DATABASE
+# DATABASE SAFETY LAYER
 # -------------------------
 migrate:
 	docker compose exec php php spark migrate --all
 
-seed:
-	docker compose exec php php spark db:seed
+# ⚠️ SAFE SEED (DEV ONLY)
+seed-dev:
+	@if [ "$(APP_ENV)" != "development" ]; then \
+		echo "❌ Seeding allowed only in development"; exit 1; \
+	fi
+	docker compose exec php php spark db:seed DatabaseSeeder
+
+# 🔥 PRODUCTION BOOTSTRAP (IDEMPOTENT)
+bootstrap:
+	docker compose exec php php spark db:seed SaasBaseSeeder
 
 # -------------------------
-# QUALITY GATES (LOCAL CI SIMULATION)
+# QUALITY GATES
 # -------------------------
 test:
 	docker compose exec php vendor/bin/phpunit
@@ -74,7 +84,7 @@ routes:
 	docker compose exec php php spark routes
 
 # -------------------------
-# RELEASE GOVERNANCE (CRITICAL)
+# RELEASE GOVERNANCE
 # -------------------------
 validate-release:
 	@echo "Validating release prerequisites..."

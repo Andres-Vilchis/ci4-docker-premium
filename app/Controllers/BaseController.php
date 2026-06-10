@@ -20,7 +20,12 @@ abstract class BaseController extends Controller
     ) {
         parent::initController($request, $response, $logger);
 
-        $this->user = auth()->user();
+        if (function_exists('auth') && auth()->loggedIn()) {
+            $this->user = auth()->user();
+        } else {
+            $this->user = null;
+        }
+
         $this->activeOrganizationId = TenantSessionService::get();
     }
 }

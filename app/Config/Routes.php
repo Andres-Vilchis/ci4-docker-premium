@@ -13,12 +13,10 @@ service('auth')->routes($routes);
 $routes->get('post-login', 'AuthController::postLoginRedirect');
 $routes->get('logout', 'AuthController::logout');
 
-
 /**
  * HEALTH SYSTEM
  */
 $routes->get('/health', 'Health::index');
-service('auth')->routes($routes);
 
 /**
  * ADMIN OBSERVABILITY

@@ -47,12 +47,18 @@ class Filters extends BaseFilters
             'invalidchars',
             'tenant' => [
                 'except' => [
-                    'login',
-                    'register',
                     '/',
+                    'health',
+                    'health/*',
+                    'login',
+                    'login/*',
+                    'register',
+                    'register/*',
+                    'post-login',
                 ],
             ],
         ],
+
         'after' => [
             'secureheaders',
         ],
@@ -61,7 +67,6 @@ class Filters extends BaseFilters
     public array $methods = [];
 
     public array $filters = [
-
         'auth' => [
             'before' => [
                 'admin/*',
@@ -73,11 +78,19 @@ class Filters extends BaseFilters
                 'admin/*',
             ],
         ],
+
         'tenantRate' => [
-            'before' => ['*']
+            'before' => [
+                '*',
+                '!health',
+                '!health/*',
+            ],
         ],
+
         'apiTenant' => [
-            'before' => ['api/*']
+            'before' => [
+                'api/*',
+            ],
         ],
     ];
 }

@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
+        intl \
         pdo_mysql \
         mysqli \
-        intl \
         zip \
         gd \
         opcache

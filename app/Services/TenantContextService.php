@@ -2,39 +2,41 @@
 
 namespace App\Services;
 
+use CodeIgniter\Shield\Entities\User;
+
 class TenantContextService
 {
     private static ?int $organizationId = null;
+    private static ?User $user = null;
 
-    public static function set(int $organizationId): void
+    public static function boot(int $organizationId, ?User $user = null): void
     {
         self::$organizationId = $organizationId;
-        session()->set('active_organization_id', $organizationId);
+        self::$user = $user;
     }
 
-    public static function get(): ?int
+    public static function organizationId(): int
     {
-        if (self::$organizationId !== null) {
-            return self::$organizationId;
+        if (!self::$organizationId) {
+            throw new \RuntimeException('Tenant not initialized');
         }
 
-        return session()->get('active_organization_id');
+        return self::$organizationId;
     }
 
-    public static function require(): int
+    public static function user(): ?User
     {
-        $id = self::get();
+        return self::$user ?? auth()->user();
+    }
 
-        if (!$id) {
-            throw new \RuntimeException('No active organization selected');
-        }
-
-        return $id;
+    public static function hasTenant(): bool
+    {
+        return self::$organizationId !== null;
     }
 
     public static function clear(): void
     {
         self::$organizationId = null;
-        session()->remove('active_organization_id');
+        self::$user = null;
     }
 }

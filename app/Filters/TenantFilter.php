@@ -6,57 +6,49 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Filters\FilterInterface;
 use App\Services\TenantContextService;
+use App\Services\TenantSessionService;
 
 class TenantFilter implements FilterInterface
 {
-    /**
-     * Rutas públicas reales del sistema auth
-     */
-    private array $publicRoutes = [
-        'login',
-        'register',
-        'logout',
-        'auth',
-    ];
-
     public function before(RequestInterface $request, $arguments = null)
     {
-        $path = trim($request->getUri()->getPath(), '/');
+        $uri = '/' . trim($request->getUri()->getPath(), '/');
 
-        foreach ($this->publicRoutes as $route) {
-            if ($path === $route || str_starts_with($path, $route . '/')) {
-                return null;
-            }
+        $publicRoutes = [
+            '/',
+            'health',
+            'login',
+            'register',
+        ];
+
+        // FIX: evitar ejecución innecesaria
+        if (in_array(trim($uri, '/'), $publicRoutes, true)) {
+            return null;
         }
 
-        if (!auth()->loggedIn()) {
+        if (!function_exists('auth')) {
+            return null;
+        }
+
+        $auth = auth();
+
+        if (!$auth || !$auth->loggedIn()) {
             return redirect()->to('/login');
         }
 
-        $tenantId = session()->get('active_organization_id');
+        $orgId = TenantSessionService::get();
 
-        if (!$tenantId) {
+        if (!$orgId) {
             return redirect()->to('/post-login');
         }
 
-        TenantContextService::set($tenantId);
-
-        $user = auth()->user();
-
-        if (!$user) {
-            return redirect()->to('/login');
-        }
+        TenantContextService::boot($orgId, $auth->user());
 
         return null;
     }
 
-    public function after(
-        RequestInterface $request,
-        ResponseInterface $response,
-        $arguments = null
-    ) {
-        if (PHP_SAPI === 'cli') {
-            TenantContextService::clear();
-        }
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
+    {
+        // no-op
     }
 }

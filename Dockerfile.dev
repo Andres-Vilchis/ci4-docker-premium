@@ -11,17 +11,18 @@ RUN apt-get update && apt-get install -y \
         zip \
         gd
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
-RUN useradd -m -u 1000 appuser
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-RUN mkdir -p /tmp/composer \
-    && chown -R appuser:appuser /tmp/composer
+RUN mkdir -p /tmp/composer
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
-USER appuser
-
-
+RUN mkdir -p /var/www/html/writable/session \
+    && mkdir -p /var/www/html/writable/cache \
+    && mkdir -p /var/www/html/writable/logs \
+    && chown -R www-data:www-data /var/www/html/writable

@@ -25,6 +25,14 @@ services:
     networks:
       - ci4-network
 
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "php", "-r", "echo 'ok';"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   nginx:
     image: nginx:1.28-alpine
     container_name: ci4-nginx
@@ -41,6 +49,8 @@ services:
 
     networks:
       - ci4-network
+
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.4
@@ -68,8 +78,9 @@ services:
     image: redis:7-alpine
     container_name: ci4-redis
 
-    ports:
-      - "6379:6379"
+    # REMOVIDO expose público
+    # ports:
+    #   - "6379:6379"
 
     command: ["redis-server", "--appendonly", "yes"]
 

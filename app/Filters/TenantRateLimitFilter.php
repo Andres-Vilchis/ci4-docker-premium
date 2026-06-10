@@ -5,30 +5,40 @@ namespace App\Filters;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Filters\FilterInterface;
-use Config\Services;
-use App\Services\TenantContextService;
+use App\Services\TenantSessionService;
 
 class TenantRateLimitFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        $tenantId = TenantContextService::get();
-        $key = 'rate_limit_tenant_' . $tenantId . '_' . $request->getIPAddress();
+        $path = '/' . trim($request->getUri()->getPath(), '/');
 
-        $cache = Services::cache();
+        $excluded = [
+            '',
+            '/',
+            'health',
+            'health/*',
+        ];
 
-        $hits = $cache->get($key) ?? 0;
-
-        if ($hits > 120) {
-            return service('response')
-                ->setStatusCode(429)
-                ->setBody('Too many requests (tenant limit)');
+        if (in_array($path, $excluded, true)) {
+            return null;
         }
 
-        $cache->save($key, $hits + 1, 60);
+        $tenantId = null;
+
+        if (class_exists(TenantSessionService::class)) {
+            $tenantId = TenantSessionService::get();
+        }
+
+        if (!$tenantId) {
+            return null;
+        }
+
+        return null;
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
+        // no-op
     }
 }

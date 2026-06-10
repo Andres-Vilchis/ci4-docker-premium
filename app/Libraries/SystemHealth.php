@@ -2,25 +2,40 @@
 
 namespace App\Libraries;
 
+use Config\Database;
+
 class SystemHealth
 {
     public static function check(): array
     {
         $start = microtime(true);
 
-        $db = DatabaseHealth::check();
+        $db = self::dbCheck();
         $redis = RedisHealth::check();
 
         return [
-            'status' => self::overallStatus($db, $redis),
+            'status'    => self::overallStatus($db, $redis),
             'timestamp' => date('c'),
-            'memory' => self::memoryUsage(),
-            'services' => [
+            'uptime'    => self::uptime(),
+            'memory'    => self::memoryUsage(),
+            'services'  => [
                 'database' => $db,
-                'redis' => $redis,
+                'redis'    => $redis,
             ],
             'latency_ms' => round((microtime(true) - $start) * 1000, 2),
         ];
+    }
+
+    private static function dbCheck(): bool
+    {
+        try {
+            $db = Database::connect();
+            $db->query('SELECT 1');
+            return true;
+        } catch (\Throwable $e) {
+            log_message('error', 'DB health failed: ' . $e->getMessage());
+            return false;
+        }
     }
 
     private static function memoryUsage(): array
@@ -31,12 +46,22 @@ class SystemHealth
         ];
     }
 
-    private static function overallStatus(bool $db, bool $redis): string
+    private static function uptime(): string
     {
-        if ($db && $redis) {
-            return 'healthy';
+        if (!file_exists('/proc/uptime')) {
+            return 'unknown';
         }
 
-        return 'degraded';
+        $uptime = (float) explode(' ', file_get_contents('/proc/uptime'))[0];
+
+        $hours = (int) floor($uptime / 3600);
+        $minutes = (int) floor(($uptime % 3600) / 60);
+
+        return "{$hours}h {$minutes}m";
+    }
+
+    private static function overallStatus(bool $db, bool $redis): string
+    {
+        return ($db && $redis) ? 'healthy' : 'degraded';
     }
 }
