@@ -4,26 +4,23 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
-$routes->get('/', 'Home::index');
+/** * ROOT */
+$routes->match(['get', 'head'], '/', 'Home::index');
 
-/**
- * AUTH (SHIELD ONLY)
- */
+/** * AUTH (SHIELD ONLY) */
 service('auth')->routes($routes);
-$routes->get('post-login', 'AuthController::postLoginRedirect');
-$routes->get('logout', 'AuthController::logout');
 
-/**
- * HEALTH SYSTEM
- */
-$routes->get('/health', 'Health::index');
+$routes->get( 'post-login', 'AuthController::postLoginRedirect' );
+$routes->get( 'set-organization/(:num)', 'AuthController::setOrganization/$1' );
+$routes->get( 'logout', 'AuthController::logout' );
 
-/**
- * ADMIN OBSERVABILITY
- */
-$routes->group('admin', function ($routes) {
-    $routes->get('health', 'Admin\HealthController::index');
-    $routes->get('queue', 'Admin\QueueController::index');
-    $routes->get('queue/failed', 'Admin\QueueController::failed');
-    $routes->get('queue/retry/(:any)', 'Admin\QueueController::retry/$1');
+/** * HEALTH SYSTEM */
+$routes->match( ['get', 'head'], 'health', 'Health::index' );
+
+/** * ADMIN OBSERVABILITY */
+$routes->group('admin', function (RouteCollection $routes) { $routes->match( ['get', 'head'], 'health', 'Admin\HealthController::index' );
+
+    $routes->get( 'queue', 'Admin\QueueController::index' );
+    $routes->get( 'queue/failed', 'Admin\QueueController::failed' );
+    $routes->get( 'queue/retry/(:any)', 'Admin\QueueController::retry/$1' );
 });

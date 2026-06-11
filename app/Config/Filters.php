@@ -47,7 +47,6 @@ class Filters extends BaseFilters
             'invalidchars',
             'tenant' => [
                 'except' => [
-                    '/',
                     'health',
                     'health/*',
                     'login',

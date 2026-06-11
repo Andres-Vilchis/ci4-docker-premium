@@ -44,13 +44,19 @@ bash:
 # -------------------------
 # DATABASE SAFETY LAYER
 # -------------------------
+reset-db:
+	docker compose exec php php spark migrate:refresh
+
 migrate:
 	docker compose exec php php spark migrate --all
 
 # SAFE SEED (DEV ONLY)
 seed:
 	docker compose exec php php spark db:seed DatabaseSeeder
-	
+
+seed-user:
+	docker compose exec php php spark db:seed UserSeeder
+
 seed-dev:
 	@if [ "$(APP_ENV)" != "development" ]; then \
 		echo "Seeding allowed only in development"; exit 1; \

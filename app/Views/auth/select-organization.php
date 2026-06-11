@@ -10,8 +10,9 @@
 <ul>
     <?php foreach ($organizations as $org): ?>
         <li>
-            <a href="/set-organization/<?= $org['id'] ?>">
-                <?= esc($org['name']) ?> (<?= esc($org['role']) ?>)
+            <a href="/set-organization/<?= $org['organization_id'] ?>">
+                <?= esc($org['name']) ?>
+                (<?= esc($org['role']) ?>)
             </a>
         </li>
     <?php endforeach; ?>

@@ -36,10 +36,20 @@ class CreateOrganizationUsers extends Migration
                 'type' => 'DATETIME',
                 'null' => true,
             ],
+
+            'updated_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
+            
+            'deleted_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
         ]);
 
         $this->forge->addKey('id', true);
-
+        $this->forge->addUniqueKey( ['organization_id', 'user_id'], 'org_user_unique' );
         $this->forge->addKey('organization_id');
         $this->forge->addKey('user_id');
 

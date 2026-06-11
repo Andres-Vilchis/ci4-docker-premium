@@ -12,7 +12,6 @@ class UserSeeder extends Seeder
     {
         $users = new UserModel();
 
-        // Buscar por username (más estable que credentials mix)
         $existing = $users->where('username', 'admin')->first();
 
         if ($existing) {
@@ -20,22 +19,19 @@ class UserSeeder extends Seeder
             return;
         }
 
-        /**
-         * IMPORTANTE:
-         * Shield maneja email/password vía Entity hydration
-         * NO se debe crear identity manual aquí.
-         */
         $user = new User([
             'username' => 'admin',
             'active'   => 1,
         ]);
 
-        // Password y email se asignan en entity (Shield intercepta y crea identity)
-        $user->email    = 'admin@test.com';
+        $user->email = 'admin@test.com';
         $user->password = 'password123';
 
-        // Guardado correcto (genera users + auth_identities automáticamente)
         $users->save($user);
+
+        // opcional: asignar grupo
+        $user = $users->findById($users->getInsertID());
+        $user->addGroup('superadmin');
 
         echo "Admin user created\n";
     }

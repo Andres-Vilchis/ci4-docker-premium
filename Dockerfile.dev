@@ -3,9 +3,17 @@ FROM php:8.2-fpm
 RUN apt-get update && apt-get install -y \
     git unzip zip curl supervisor \
     libzip-dev libpng-dev libicu-dev \
+    locales \
     && docker-php-ext-install intl pdo_mysql mysqli zip gd
 
 RUN pecl install redis && docker-php-ext-enable redis
+
+# Asegurar locales (CRÍTICO para CodeIgniter Time/Locale)
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen || true && \
+    locale-gen || true
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
