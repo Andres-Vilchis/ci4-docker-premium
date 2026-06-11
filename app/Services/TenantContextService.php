@@ -3,25 +3,46 @@
 namespace App\Services;
 
 use CodeIgniter\Shield\Entities\User;
+use RuntimeException;
 
 class TenantContextService
 {
     private static ?int $organizationId = null;
+
     private static ?User $user = null;
 
-    public static function boot(int $organizationId, ?User $user = null): void
-    {
+    public static function boot(
+        int $organizationId,
+        ?User $user = null
+    ): void {
         self::$organizationId = $organizationId;
         self::$user = $user;
     }
 
-    public static function organizationId(): int
+    public static function set(int $organizationId): void
     {
-        if (!self::$organizationId) {
-            throw new \RuntimeException('Tenant not initialized');
+        self::$organizationId = $organizationId;
+    }
+
+    public static function get(): ?int
+    {
+        return self::$organizationId;
+    }
+
+    public static function require(): int
+    {
+        if (self::$organizationId === null) {
+            throw new RuntimeException(
+                'Tenant not initialized'
+            );
         }
 
         return self::$organizationId;
+    }
+
+    public static function organizationId(): int
+    {
+        return self::require();
     }
 
     public static function user(): ?User

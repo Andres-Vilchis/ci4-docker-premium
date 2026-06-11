@@ -12,17 +12,17 @@ class TenantFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        $uri = '/' . trim($request->getUri()->getPath(), '/');
+        $path = trim($request->getUri()->getPath(), '/');
 
         $publicRoutes = [
-            '/',
+            '',
             'health',
             'login',
             'register',
+            'post-login',
         ];
 
-        // FIX: evitar ejecución innecesaria
-        if (in_array(trim($uri, '/'), $publicRoutes, true)) {
+        if (in_array($path, $publicRoutes, true)) {
             return null;
         }
 

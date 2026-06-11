@@ -3,26 +3,43 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
-use App\Traits\HasOrganizationScope;
+use App\Services\TenantContextService;
 
 class BaseSaaSModel extends Model
 {
-    use HasOrganizationScope;
 
     protected bool $skipOrgScope = false;
 
-    protected function initialize()
+    public function builder($table = null)
     {
-        parent::initialize();
-        $this->initializeHasOrganizationScope();
+        $builder = parent::builder($table);
+
+        return $this->applyTenantScope($builder);
     }
 
-    /**
-     * Admin override (optional)
-     */
-    public function withoutTenant(): self
+    protected function applyTenantScope($builder)
     {
-        $this->applyOrgScope = false;
+        if ($this->skipOrgScope) {
+            return $builder;
+        }
+
+        $tenantId = TenantContextService::get();
+
+        if (!$tenantId) {
+            return $builder;
+        }
+
+        return $builder->where($this->getTenantField(), $tenantId);
+    }
+
+    public function withoutTenant(): static
+    {
+        $this->skipOrgScope = true;
         return $this;
+    }
+
+    protected function getTenantField(): string
+    {
+        return 'organization_id';
     }
 }

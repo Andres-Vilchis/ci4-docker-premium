@@ -7,6 +7,7 @@ use App\Models\BaseSaaSModel;
 class OrganizationModel extends BaseSaaSModel
 {
     protected $table = 'organizations';
+    protected bool $skipOrgScope = true;
 
     protected $allowedFields = [
         'name',

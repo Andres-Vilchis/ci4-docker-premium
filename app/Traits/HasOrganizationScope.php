@@ -2,30 +2,44 @@
 
 namespace App\Traits;
 
-use App\Libraries\TenantContext;
+use App\Services\TenantContextService;
 
 trait HasOrganizationScope
 {
-    protected bool $applyOrgScope = true;
 
     protected function initializeHasOrganizationScope()
     {
-        $this->beforeInsert(function ($data) {
+        $this->beforeInsert(function (array $data) {
 
-            if (!isset($data['data']['organization_id'])) {
-                $data['data']['organization_id'] = TenantContext::get();
+            $tenantId = TenantContextService::get();
+
+            if (!$tenantId) {
+                return $data;
             }
+
+            // hard guard: only if column exists in schema mapping
+            if (!in_array('organization_id', $this->allowedFields ?? [])) {
+                return $data;
+            }
+
+            $data['data']['organization_id'] = $tenantId;
 
             return $data;
         });
+    }
 
-        $this->beforeFind(function ($builder) {
+    protected function applyTenantWhere($builder)
+    {
+        $tenantId = TenantContextService::get();
 
-            if ($this->applyOrgScope && TenantContext::get()) {
-                $builder->where('organization_id', TenantContext::get());
-            }
-
+        if (!$tenantId) {
             return $builder;
-        });
+        }
+
+        if (!in_array('organization_id', $this->allowedFields ?? [])) {
+            return $builder;
+        }
+
+        return $builder->where('organization_id', $tenantId);
     }
 }

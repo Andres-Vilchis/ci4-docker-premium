@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\TenantContextService;
-
 class TenantKernel
 {
     public static function boot(): void
@@ -14,17 +12,13 @@ class TenantKernel
             return;
         }
 
-        TenantContextService::set($tenantId);
+        TenantContextService::set(
+            (int) $tenantId
+        );
     }
 
     public static function requireTenant(): int
     {
-        $id = TenantContextService::get();
-
-        if (!$id) {
-            throw new \RuntimeException('Tenant not set (access denied)');
-        }
-
-        return $id;
+        return TenantContextService::require();
     }
 }
