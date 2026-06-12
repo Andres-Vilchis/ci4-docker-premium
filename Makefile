@@ -1,22 +1,31 @@
 # =========================
 # CI4 DOCKER PREMIUM KIT
-# SAAS-GRADE MAKEFILE
+# SAAS-GRADE MAKEFILE v2 (ALIGNED)
 # =========================
 
 APP_ENV ?= development
 
-# -------------------------
-# SETUP
-# -------------------------
+# =====================================================
+# CORE SETUP
+# =====================================================
+
 setup:
 	@bash scripts/setup.sh
 
 validate:
 	@bash scripts/validate.sh
 
-# -------------------------
+preflight:
+	@echo "Running full preflight..."
+	@make validate
+	@make test
+	@make stan
+	@make rector
+
+# =====================================================
 # DOCKER LIFECYCLE
-# -------------------------
+# =====================================================
+
 up:
 	docker compose up -d --build
 
@@ -29,9 +38,6 @@ restart:
 build:
 	docker compose build --no-cache
 
-# -------------------------
-# DEBUG / DEV
-# -------------------------
 logs:
 	docker compose logs -f
 
@@ -41,35 +47,32 @@ shell:
 bash:
 	docker compose exec php bash
 
-# -------------------------
-# DATABASE SAFETY LAYER
-# -------------------------
-reset-db:
-	docker compose exec php php spark migrate:refresh
+# =====================================================
+# DATABASE (SAFE LAYER)
+# =====================================================
 
 migrate:
 	docker compose exec php php spark migrate --all
 
-# SAFE SEED (DEV ONLY)
+db-reset-safe:
+	@if [ "$(APP_ENV)" = "production" ]; then \
+		echo "ERROR: DB reset blocked in production"; exit 1; \
+	fi
+	docker compose exec php php spark migrate:refresh
+
 seed:
 	docker compose exec php php spark db:seed DatabaseSeeder
 
 seed-user:
 	docker compose exec php php spark db:seed UserSeeder
 
-seed-dev:
-	@if [ "$(APP_ENV)" != "development" ]; then \
-		echo "Seeding allowed only in development"; exit 1; \
-	fi
-	docker compose exec php php spark db:seed DatabaseSeeder
-
-# PRODUCTION BOOTSTRAP (IDEMPOTENT)
 bootstrap:
 	docker compose exec php php spark db:seed SaasBaseSeeder
 
-# -------------------------
+# =====================================================
 # QUALITY GATES
-# -------------------------
+# =====================================================
+
 test:
 	docker compose exec php vendor/bin/phpunit
 
@@ -80,44 +83,75 @@ rector:
 	docker compose exec php vendor/bin/rector process --dry-run
 
 check:
-	@echo "Running full quality gate..."
 	docker compose exec php composer check
 
-# -------------------------
-# SYSTEM CHECK
-# -------------------------
+# =====================================================
+# OBSERVABILITY
+# =====================================================
+
 health:
-	@curl -s http://localhost/health || echo "Healthcheck failed"
+	@curl -s http://localhost:8080/health || echo "Healthcheck failed"
 
 routes:
 	docker compose exec php php spark routes
 
-# -------------------------
-# RELEASE GOVERNANCE
-# -------------------------
+# =====================================================
+# RELEASE FLOW (FIXED)
+# =====================================================
+
 validate-release:
-	@echo "Validating release prerequisites..."
-
-	@bash scripts/validate.sh || (echo "Validation script failed" && exit 1)
-
-	@echo "Checking git status..."
+	@echo "Running release validation..."
+	@bash scripts/validate.sh || (echo "Validation failed" && exit 1)
 	@git diff --quiet || (echo "Uncommitted changes detected" && exit 1)
-
-	@echo "Checking branch..."
 	@test "$$(git branch --show-current)" = "main" || (echo "Must be on main branch" && exit 1)
+	@make preflight
 
 release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make release VERSION=v1.0.0"; exit 1; \
+	fi
 	@make validate-release
-	@bash scripts/release.sh
+	@bash scripts/release.sh $(VERSION)
 
-# -------------------------
-# DEPLOYMENT
-# -------------------------
+# =====================================================
+# DEPLOYMENT (FIXED)
+# =====================================================
+
 deploy:
-	@bash scripts/deploy.sh
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make deploy VERSION=v1.0.0"; exit 1; \
+	fi
+	@bash scripts/deploy.sh $(VERSION)
 
-# -------------------------
+# =====================================================
 # CLEANUP
-# -------------------------
+# =====================================================
+
 clean:
 	docker system prune -af
+
+# =====================================================
+# HELP
+# =====================================================
+
+help:
+	@echo "CI4 Docker Premium Kit v2"
+	@echo ""
+	@echo "Core:"
+	@echo "  make setup"
+	@echo "  make validate"
+	@echo "  make preflight"
+	@echo ""
+	@echo "Database:"
+	@echo "  make migrate"
+	@echo "  make db-reset-safe APP_ENV=development"
+	@echo "  make bootstrap"
+	@echo ""
+	@echo "Quality:"
+	@echo "  make test"
+	@echo "  make stan"
+	@echo "  make rector"
+	@echo ""
+	@echo "Release:"
+	@echo "  make release VERSION=v1.0.0"
+	@echo "  make deploy VERSION=v1.0.0"

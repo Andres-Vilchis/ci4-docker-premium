@@ -6,8 +6,8 @@ use CodeIgniter\Config\BaseConfig;
 
 class App extends BaseConfig
 {
-   
-    public string $baseURL = '';
+
+    public string $baseURL = 'http://localhost/';
 
     public array $allowedHostnames = [];
 
@@ -54,7 +54,6 @@ class App extends BaseConfig
 
     private function detectBaseURL(): string
     {
-        // Docker / local default
         if (php_sapi_name() === 'cli') {
             return 'http://localhost/';
         }

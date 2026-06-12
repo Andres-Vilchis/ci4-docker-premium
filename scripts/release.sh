@@ -17,20 +17,31 @@ if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
-echo "Releasing $VERSION..."
+# -------------------------
+# MUST BE CLEAN
+# -------------------------
+git diff --quiet || { echo "Uncommitted changes"; exit 1; }
 
 # -------------------------
-# CHECK CLEAN STATE
+# MUST BE MAIN
 # -------------------------
-git diff --quiet || {
-  echo "Uncommitted changes detected"
+CURRENT_BRANCH=$(git branch --show-current)
+
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "Must be on main branch"
   exit 1
-}
+fi
+
+# -------------------------
+# RUN QUALITY GATES
+# -------------------------
+docker compose exec php vendor/bin/phpunit || exit 1
+docker compose exec php vendor/bin/phpstan analyse || exit 1
 
 # -------------------------
 # TAG + PUSH
 # -------------------------
-git tag $VERSION
-git push origin $VERSION
+git tag "$VERSION"
+git push origin "$VERSION"
 
-echo "Release $VERSION created successfully"
+echo "Release $VERSION created"

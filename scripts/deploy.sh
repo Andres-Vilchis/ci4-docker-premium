@@ -6,67 +6,52 @@ echo "====================================="
 echo " CI4 PRODUCTION DEPLOY ENGINE"
 echo "====================================="
 
-# -------------------------
-# VALIDATION
-# -------------------------
-if [ -z "$1" ]; then
-  echo "ERROR: You must provide image version (e.g. v1.0.0)"
+VERSION=$1
+
+if [ -z "$VERSION" ]; then
+  echo "ERROR: Version required (v1.0.0)"
   exit 1
 fi
 
-VERSION=$1
 IMAGE="ci4-starter:${VERSION}"
 
-echo "Deploying version: $VERSION"
+echo "Deploying: $IMAGE"
 
 # -------------------------
-# LOAD CURRENT STATE
+# PULL IMAGE
 # -------------------------
-CURRENT=$(docker compose -f docker-compose.prod.yml ps -q php || true)
-
-echo "Current container: $CURRENT"
-
-# -------------------------
-# PULL NEW IMAGE
-# -------------------------
-export DOCKER_IMAGE=$IMAGE
-
-echo "Pulling image: $IMAGE"
-
-docker pull $IMAGE || {
-  echo "ERROR: Image not found"
+docker pull "$IMAGE" || {
+  echo "ERROR: image not found"
   exit 1
 }
 
 # -------------------------
-# DEPLOY NEW VERSION
+# PREVIOUS STATE
 # -------------------------
-echo "Starting new container..."
-
-docker compose -f docker-compose.prod.yml up -d
+OLD_CONTAINER=$(docker compose -f docker-compose.prod.yml ps -q php || true)
 
 # -------------------------
-# HEALTHCHECK
+# DEPLOY NEW STACK
 # -------------------------
-echo "Running healthcheck..."
+DOCKER_IMAGE="$IMAGE" docker compose -f docker-compose.prod.yml up -d
 
 sleep 5
 
-if curl -s http://localhost/health | grep -q "ok"; then
-  echo "Healthcheck passed"
-else
-  echo "Healthcheck failed - rolling back"
+# -------------------------
+# HEALTHCHECK (STRICT)
+# -------------------------
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/health)
 
-  docker compose -f docker-compose.prod.yml down
+if [ "$STATUS" != "200" ]; then
+  echo "DEPLOY FAILED - rolling back"
 
-  if [ ! -z "$CURRENT" ]; then
-    echo "Restoring previous container..."
-    docker start $CURRENT || true
+  DOCKER_IMAGE="$IMAGE" docker compose -f docker-compose.prod.yml down
+
+  if [ ! -z "$OLD_CONTAINER" ]; then
+    docker start "$OLD_CONTAINER" || true
   fi
 
   exit 1
 fi
 
-echo "====================================="
-echo " DEPLOY SUCCESSFUL"
-echo "====================================="
+echo "DEPLOY SUCCESSFUL"
