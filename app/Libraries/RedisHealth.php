@@ -4,22 +4,25 @@ namespace App\Libraries;
 
 class RedisHealth
 {
-    public static function check(): bool
+    public static function check(): array
     {
+        $start = microtime(true);
+
         try {
-            $redis = new \Redis();
+            $redis = RedisClient::conn();
 
-            $host = env('redis.host', 'redis');
-            $port = (int) env('redis.port', 6379);
+            $pong = $redis->ping();
 
-            $redis->connect($host, $port, 1.5);
-
-            $redis->ping();
-
-            return true;
+            return [
+                'status' => $pong ? 'ok' : 'fail',
+                'ms' => round((microtime(true) - $start) * 1000, 2),
+            ];
         } catch (\Throwable $e) {
-            log_message('error', 'Redis health failed: ' . $e->getMessage());
-            return false;
+            return [
+                'status' => 'fail',
+                'error' => $e->getMessage(),
+                'ms' => round((microtime(true) - $start) * 1000, 2),
+            ];
         }
     }
 }

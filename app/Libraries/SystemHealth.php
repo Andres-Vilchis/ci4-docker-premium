@@ -14,54 +14,32 @@ class SystemHealth
         $redis = RedisHealth::check();
 
         return [
-            'status'    => self::overallStatus($db, $redis),
-            'timestamp' => date('c'),
-            'uptime'    => self::uptime(),
-            'memory'    => self::memoryUsage(),
-            'services'  => [
-                'database' => $db,
-                'redis'    => $redis,
-            ],
-            'latency_ms' => round((microtime(true) - $start) * 1000, 2),
+            'app' => 'ok',
+            'database' => $db,
+            'redis' => $redis,
+            'request_id' => service('request')->getHeaderLine('X-Request-ID') ?? null,
+            'total_ms' => round((microtime(true) - $start) * 1000, 2),
         ];
     }
 
-    private static function dbCheck(): bool
+    private static function dbCheck(): array
     {
+        $start = microtime(true);
+
         try {
             $db = Database::connect();
             $db->query('SELECT 1');
-            return true;
+
+            return [
+                'status' => 'ok',
+                'ms'     => round((microtime(true) - $start) * 1000, 2),
+            ];
         } catch (\Throwable $e) {
-            log_message('error', 'DB health failed: ' . $e->getMessage());
-            return false;
+            return [
+                'status' => 'fail',
+                'error'  => $e->getMessage(),
+                'ms'     => round((microtime(true) - $start) * 1000, 2),
+            ];
         }
-    }
-
-    private static function memoryUsage(): array
-    {
-        return [
-            'used_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
-            'peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
-        ];
-    }
-
-    private static function uptime(): string
-    {
-        if (!file_exists('/proc/uptime')) {
-            return 'unknown';
-        }
-
-        $uptime = (float) explode(' ', file_get_contents('/proc/uptime'))[0];
-
-        $hours = (int) floor($uptime / 3600);
-        $minutes = (int) floor(($uptime % 3600) / 60);
-
-        return "{$hours}h {$minutes}m";
-    }
-
-    private static function overallStatus(bool $db, bool $redis): string
-    {
-        return ($db && $redis) ? 'healthy' : 'degraded';
     }
 }
