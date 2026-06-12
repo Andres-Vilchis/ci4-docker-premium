@@ -24,8 +24,8 @@ class UserSeeder extends Seeder
             'active'   => 1,
         ]);
 
-        $user->email = 'admin@test.com';
-        $user->password = 'password123';
+        $user->email = 'andresvilchis@gmail.com';
+        $user->password = 'admin.P4ss';
 
         $users->save($user);
 

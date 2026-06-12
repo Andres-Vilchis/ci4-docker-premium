@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Config\Services;
+use App\Libraries\Redis\RedisClient;
 use Throwable;
 
 class RedisService
@@ -12,24 +12,24 @@ class RedisService
         $start = microtime(true);
 
         try {
-            $cache = Services::cache();
-            $handler = $cache->getHandler();
+            $redis = RedisClient::connection();
 
-            if (method_exists($handler, 'ping')) {
-                $handler->ping();
-            } else {
-                $cache->save('__healthcheck', 'ok', 10);
-                $cache->get('__healthcheck');
+            $pong = $redis->ping();
+
+            if ($pong === false || $pong === null) {
+                throw new \Exception('Redis ping failed');
             }
 
             return [
                 'status' => 'ok',
-                'ms' => (microtime(true) - $start) * 1000,
+                'ms' => round((microtime(true) - $start) * 1000, 2),
             ];
+
         } catch (Throwable $e) {
+
             return [
                 'status' => 'fail',
-                'ms' => (microtime(true) - $start) * 1000,
+                'ms' => round((microtime(true) - $start) * 1000, 2),
                 'error' => $e->getMessage(),
             ];
         }

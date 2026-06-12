@@ -69,7 +69,7 @@ db-reset-safe:
 seed:
 	docker compose exec php php spark db:seed DatabaseSeeder
 
-seed-user:
+seed-admin:
 	docker compose exec php php spark db:seed UserSeeder
 
 bootstrap:
@@ -161,3 +161,17 @@ help:
 	@echo "Release:"
 	@echo "  make release VERSION=v1.0.0"
 	@echo "  make deploy VERSION=v1.0.0"
+
+
+# =====================================================
+# REDIS
+# =====================================================
+
+redis-start:
+	docker compose start redis
+	
+redis-stop: 
+	docker compose stop redis
+	
+redis-restar:
+	docker compose stop redis && docker compose start redis

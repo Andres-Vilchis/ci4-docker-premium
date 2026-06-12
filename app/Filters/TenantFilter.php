@@ -7,6 +7,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Filters\FilterInterface;
 use App\Services\TenantContextService;
 use App\Services\TenantSessionService;
+use App\Observability\Context\RequestContext;
 
 class TenantFilter implements FilterInterface
 {
@@ -43,12 +44,14 @@ class TenantFilter implements FilterInterface
         }
 
         TenantContextService::boot($orgId, $auth->user());
+        RequestContext::$tenantId = $orgId;
+        RequestContext::$userId = $auth->user()->id ?? null;
 
         return null;
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // no-op
+        return null;
     }
 }
