@@ -25,9 +25,11 @@ class Filters extends BaseFilters
         'secureheaders' => SecureHeaders::class,
         'auth'          => AuthFilter::class,
         'session'       => SessionAuth::class,
+        
         'tenant'        => \App\Filters\TenantFilter::class,
         'tenantRate'    => \App\Filters\TenantRateLimitFilter::class,
         'apiTenant'     => \App\Filters\ApiTenantAuthFilter::class,
+        'observability' => \App\Filters\ObservabilityFilter::class,
     ];
 
     public array $required = [
@@ -45,6 +47,7 @@ class Filters extends BaseFilters
     public array $globals = [
         'before' => [
             'invalidchars',
+            'observability',
             'tenant' => [
                 'except' => [
                     'health',

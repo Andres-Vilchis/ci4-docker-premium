@@ -2,7 +2,6 @@
 
 namespace Config;
 
-use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Cache\Handlers\ApcuHandler;
 use CodeIgniter\Cache\Handlers\DummyHandler;
 use CodeIgniter\Cache\Handlers\FileHandler;
@@ -15,75 +14,58 @@ use CodeIgniter\Config\BaseConfig;
 class Cache extends BaseConfig
 {
     public string $handler = 'redis';
-
-    public string $backupHandler = 'dummy';
-
+    public string $backupHandler = 'file';
     public string $prefix = 'ci4_';
 
     public int $ttl = 60;
-
     public string $reservedCharacters = '{}()/\@:';
 
     public array $file = [
         'storePath' => WRITEPATH . 'cache/',
-        'mode'      => 0640,
+        'mode' => 0640,
     ];
 
     public array $memcached = [
-        'host'   => '127.0.0.1',
-        'port'   => 11211,
+        'host' => '127.0.0.1',
+        'port' => 11211,
         'weight' => 1,
-        'raw'    => false,
+        'raw' => false,
     ];
 
     public array $redis = [
-        'host'       => '',
-        'password'   => null,
-        'port'       => 6379,
-        'timeout'    => 2.0,
-        'async'      => false,
+        'host' => 'redis',
+        'password' => null,
+        'port' => 6379,
+        'timeout' => 2.0,
+        'async' => false,
         'persistent' => false,
-        'database'   => 0,
+        'database' => 0,
     ];
 
     public array $validHandlers = [
-        'apcu'      => ApcuHandler::class,
-        'dummy'     => DummyHandler::class,
-        'file'      => FileHandler::class,
+        'apcu' => ApcuHandler::class,
+        'dummy' => DummyHandler::class,
+        'file' => FileHandler::class,
         'memcached' => MemcachedHandler::class,
-        'predis'    => PredisHandler::class,
-        'redis'     => RedisHandler::class,
-        'wincache'  => WincacheHandler::class,
+        'predis' => PredisHandler::class,
+        'redis' => RedisHandler::class,
+        'wincache' => WincacheHandler::class,
     ];
 
     public $cacheQueryString = false;
-
     public array $cacheStatusCodes = [200];
 
     public function __construct()
     {
         parent::__construct();
 
-        $this->handler = 'redis';
+        $this->handler = env('cache.handler', 'redis');
         $this->backupHandler = 'file';
-        $this->prefix = 'ci4_';
+        $this->prefix = env('cache.prefix', 'ci4_');
 
         $this->redis['host'] = env('cache.redis.host', 'redis');
         $this->redis['port'] = (int) env('cache.redis.port', 6379);
         $this->redis['timeout'] = 2.0;
         $this->redis['database'] = 0;
-    }
-
-    private function detectRedisHost(): string
-    {
-        if (getenv('REDIS_HOST')) {
-            return getenv('REDIS_HOST');
-        }
-
-        if (getenv('CACHE_REDIS_HOST')) {
-            return getenv('CACHE_REDIS_HOST');
-        }
-
-        return 'redis';
     }
 }

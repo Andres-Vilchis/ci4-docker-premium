@@ -47,12 +47,18 @@ shell:
 bash:
 	docker compose exec php bash
 
+cache-clear:
+	docker compose exec php php spark cache:clear
+
 # =====================================================
 # DATABASE (SAFE LAYER)
 # =====================================================
 
 migrate:
 	docker compose exec php php spark migrate --all
+
+migrate-status:
+	docker compose exec php php spark migrate:status
 
 db-reset-safe:
 	@if [ "$(APP_ENV)" = "production" ]; then \

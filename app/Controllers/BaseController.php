@@ -7,6 +7,7 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use App\Services\TenantSessionService;
+use App\Observability\Context\RequestContext;
 
 abstract class BaseController extends Controller
 {
@@ -27,5 +28,6 @@ abstract class BaseController extends Controller
         }
 
         $this->activeOrganizationId = TenantSessionService::get();
+        RequestContext::$tenantId = $this->activeOrganizationId;
     }
 }
