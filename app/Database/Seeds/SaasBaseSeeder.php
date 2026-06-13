@@ -3,7 +3,7 @@
 namespace App\Database\Seeds;
 
 use CodeIgniter\Database\Seeder;
-use CodeIgniter\Shield\Models\UserModel;
+use App\Database\Seeds\SeederBootstrapGuard;
 
 class SaasBaseSeeder extends Seeder
 {
@@ -11,16 +11,10 @@ class SaasBaseSeeder extends Seeder
     {
         $db = $this->db;
 
-        if (!$db->tableExists('users')) {
-            throw new \RuntimeException(
-                'Shield not installed correctly. Run: php spark shield:migrate'
-            );
-        }
+        SeederBootstrapGuard::assertReady();
 
         /*
-        |---------------------------------------------
         | ORGANIZATION
-        |---------------------------------------------
         */
         $org = $db->table('organizations')
             ->where('slug', 'default-org')
@@ -41,39 +35,39 @@ class SaasBaseSeeder extends Seeder
         }
 
         /*
-        |---------------------------------------------
-        | USER (ROBUST IDENTITY CHECK)
-        |---------------------------------------------
+        | USER (RAW SAFE SHIELD INSERT)
         */
-        $users = new UserModel();
+        $identity = $db->table('auth_identities')
+            ->where('secret', 'admin@local.test')
+            ->get()
+            ->getRowArray();
 
-        // FIX: usar email directo en identities table
-        $existing = $users
-            ->where('username', 'admin')
-            ->first();
+        if (!$identity) {
 
-        if (!$existing) {
-
-            $users->save([
+            $db->table('users')->insert([
                 'username' => 'admin',
                 'active'   => 1,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
             ]);
 
-            $userId = $users->getInsertID();
+            $userId = $db->insertID();
 
-            $user = $users->findById($userId);
-            $user->email = 'admin@local.test';
-            $user->password = 'Password123!';
-            $users->save($user);
+            $db->table('auth_identities')->insert([
+                'user_id' => $userId,
+                'type'    => 'email_password',
+                'secret'  => 'admin@local.test',
+                'secret2' => password_hash('Password123!', PASSWORD_DEFAULT),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
 
         } else {
-            $userId = $existing->id;
+            $userId = $identity['user_id'];
         }
 
         /*
-        |---------------------------------------------
-        | RELACIÓN ORG - USER
-        |---------------------------------------------
+        | RELATION
         */
         $exists = $db->table('organization_users')
             ->where('organization_id', $orgId)

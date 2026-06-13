@@ -3,36 +3,36 @@
 namespace App\Database\Seeds;
 
 use CodeIgniter\Database\Seeder;
-use CodeIgniter\Shield\Models\UserModel;
-use CodeIgniter\Shield\Entities\User;
 
 class UserSeeder extends Seeder
 {
     public function run()
     {
-        $users = new UserModel();
+        $db = $this->db;
 
-        $existing = $users->where('username', 'admin')->first();
+        $exists = $db->table('users')
+            ->where('username', 'admin')
+            ->get()
+            ->getRowArray();
 
-        if ($existing) {
+        if ($exists) {
             echo "User admin already exists\n";
             return;
         }
 
-        $user = new User([
-            'username' => 'admin',
-            'active'   => 1,
+        $db->table('users')->insert([
+            'username'   => 'admin',
+            'active'     => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $user->email = 'andresvilchis@gmail.com';
-        $user->password = 'admin.P4ss';
+        $userId = $db->insertID();
 
-        $users->save($user);
-
-        $userId = $users->where('username', 'admin')->first()->id;
-
-        $userEntity = $users->findById($userId);
-        $userEntity->addGroup('superadmin');
+        $db->table('auth_groups_users')->insert([
+            'user_id' => $userId,
+            'group'   => 'superadmin',
+        ]);
 
         echo "Admin user created\n";
     }
