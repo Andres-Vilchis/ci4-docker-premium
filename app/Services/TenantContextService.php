@@ -5,6 +5,10 @@ namespace App\Services;
 use CodeIgniter\Shield\Entities\User;
 use RuntimeException;
 
+/**
+ * Central tenant context holder.
+ * Works for both HTTP and CLI environments.
+ */
 class TenantContextService
 {
     private static ?int $organizationId = null;
@@ -28,7 +32,7 @@ class TenantContextService
 
     public static function require(): int
     {
-        if (!self::$organizationId) {
+        if (self::$organizationId === null) {
             throw new RuntimeException('Tenant not initialized');
         }
 
@@ -42,8 +46,7 @@ class TenantContextService
 
     public static function user(): ?User
     {
-        // SAFE fallback (no fatal dependency on auth())
-        if (self::$user) {
+        if (self::$user instanceof User) {
             return self::$user;
         }
 
@@ -53,6 +56,15 @@ class TenantContextService
         }
 
         return null;
+    }
+
+    /**
+     * SAFE for CLI usage.
+     * Prevents fatal errors when tenant is not booted.
+     */
+    public static function safeOrganizationId(): ?int
+    {
+        return self::$organizationId;
     }
 
     public static function hasTenant(): bool

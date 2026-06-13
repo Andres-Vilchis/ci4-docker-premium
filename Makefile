@@ -59,7 +59,9 @@ cache-clear:
 
 cache-info:
 	docker compose exec php php spark cache:info
-
+	
+cache-optimize:
+	docker compose exec php php spark optimize
 # =====================================================
 # DATABASE (SAFE LAYER)
 # =====================================================

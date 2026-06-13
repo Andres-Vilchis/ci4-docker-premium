@@ -44,6 +44,7 @@ class TenantFilter implements FilterInterface
         }
 
         TenantContextService::boot($orgId, $auth->user());
+
         RequestContext::$tenantId = $orgId;
         RequestContext::$userId = $auth->user()->id ?? null;
 
@@ -52,6 +53,6 @@ class TenantFilter implements FilterInterface
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        return null;
+        return $response;
     }
 }
