@@ -5,6 +5,9 @@
 
 APP_ENV ?= development
 
+psysh:
+	docker compose exec php php spark console
+
 # =====================================================
 # CORE SETUP
 # =====================================================
@@ -47,8 +50,15 @@ shell:
 bash:
 	docker compose exec php bash
 
+# =====================================================
+# CACHE
+# =====================================================
+
 cache-clear:
 	docker compose exec php php spark cache:clear
+
+cache-info:
+	docker compose exec php php spark cache:info
 
 # =====================================================
 # DATABASE (SAFE LAYER)
@@ -173,5 +183,5 @@ redis-start:
 redis-stop: 
 	docker compose stop redis
 	
-redis-restar:
+redis-restart:
 	docker compose stop redis && docker compose start redis

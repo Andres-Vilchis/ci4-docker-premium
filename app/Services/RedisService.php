@@ -24,7 +24,6 @@ class RedisService
                 'status' => 'ok',
                 'ms' => round((microtime(true) - $start) * 1000, 2),
             ];
-
         } catch (Throwable $e) {
 
             return [

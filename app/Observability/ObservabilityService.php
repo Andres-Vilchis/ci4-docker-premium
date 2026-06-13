@@ -46,7 +46,6 @@ class ObservabilityService
             ]);
 
             return $result;
-
         } catch (\Throwable $e) {
 
             self::error("metric.$name.fail", [

@@ -29,9 +29,10 @@ class UserSeeder extends Seeder
 
         $users->save($user);
 
-        // opcional: asignar grupo
-        $user = $users->findById($users->getInsertID());
-        $user->addGroup('superadmin');
+        $userId = $users->where('username', 'admin')->first()->id;
+
+        $userEntity = $users->findById($userId);
+        $userEntity->addGroup('superadmin');
 
         echo "Admin user created\n";
     }

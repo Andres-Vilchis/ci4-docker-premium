@@ -37,8 +37,11 @@ class TenantRateLimitFilter implements FilterInterface
         return null;
     }
 
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
-    {
-        // no-op
+    public function after(
+        RequestInterface $request,
+        ResponseInterface $response,
+        $arguments = null
+    ): ?ResponseInterface {
+        return $response;
     }
 }

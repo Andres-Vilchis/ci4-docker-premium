@@ -18,11 +18,15 @@ class Health extends ResourceController
         $requestId = $request->getHeaderLine('X-Request-ID')
             ?: bin2hex(random_bytes(16));
 
-        $dbStatus = ObservabilityService::measure('db_health', fn() =>
+        $dbStatus = ObservabilityService::measure(
+            'db_health',
+            fn() =>
             DatabaseService::check()
         );
 
-        $redisStatus = ObservabilityService::measure('redis_health', fn() =>
+        $redisStatus = ObservabilityService::measure(
+            'redis_health',
+            fn() =>
             RedisService::check()
         );
 
@@ -36,7 +40,8 @@ class Health extends ResourceController
 
         try {
             ObservabilityService::info('health_check', $payload);
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return $this->response
             ->setHeader('X-Request-ID', $requestId)

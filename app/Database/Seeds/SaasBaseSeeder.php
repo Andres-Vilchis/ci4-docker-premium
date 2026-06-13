@@ -11,10 +11,16 @@ class SaasBaseSeeder extends Seeder
     {
         $db = $this->db;
 
+        if (!$db->tableExists('users')) {
+            throw new \RuntimeException(
+                'Shield not installed correctly. Run: php spark shield:migrate'
+            );
+        }
+
         /*
-        |--------------------------------------------------------------------------
-        | 1. ORGANIZATION (IDEMPOTENT)
-        |--------------------------------------------------------------------------
+        |---------------------------------------------
+        | ORGANIZATION
+        |---------------------------------------------
         */
         $org = $db->table('organizations')
             ->where('slug', 'default-org')
@@ -35,39 +41,39 @@ class SaasBaseSeeder extends Seeder
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | 2. USER (SHIELD SAFE CREATION)
-        |--------------------------------------------------------------------------
+        |---------------------------------------------
+        | USER (ROBUST IDENTITY CHECK)
+        |---------------------------------------------
         */
-        $users = model(UserModel::class);
+        $users = new UserModel();
 
-        $existingUser = $users->findByCredentials([
-            'email' => 'admin@local.test',
-        ]);
+        // FIX: usar email directo en identities table
+        $existing = $users
+            ->where('username', 'admin')
+            ->first();
 
-        if (!$existingUser) {
+        if (!$existing) {
 
-            $user = $users->save([
+            $users->save([
                 'username' => 'admin',
                 'active'   => 1,
             ]);
 
             $userId = $users->getInsertID();
 
-            $userEntity = $users->findById($userId);
-            $userEntity->email = 'admin@local.test';
-            $userEntity->password = 'Password123!';
-
-            $users->save($userEntity);
+            $user = $users->findById($userId);
+            $user->email = 'admin@local.test';
+            $user->password = 'Password123!';
+            $users->save($user);
 
         } else {
-            $userId = $existingUser->id;
+            $userId = $existing->id;
         }
 
         /*
-        |--------------------------------------------------------------------------
-        | 3. RELACIÓN ORGANIZATION - USER (IDEMPOTENT)
-        |--------------------------------------------------------------------------
+        |---------------------------------------------
+        | RELACIÓN ORG - USER
+        |---------------------------------------------
         */
         $exists = $db->table('organization_users')
             ->where('organization_id', $orgId)
