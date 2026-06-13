@@ -2,67 +2,30 @@
 
 namespace App\Services;
 
-use CodeIgniter\Shield\Entities\User;
-use RuntimeException;
+trigger_error(
+    'TenantContextService is deprecated. Use service("tenantContext")',
+    E_USER_DEPRECATED
+);
 
 class TenantContextService
 {
-    private static ?int $organizationId = null;
-    private static ?User $user = null;
-
-    public static function boot(int $organizationId, ?User $user = null): void
+    public static function set(int $tenantId): void
     {
-        self::$organizationId = $organizationId;
-        self::$user = $user;
-    }
-
-    public static function set(int $organizationId): void
-    {
-        self::$organizationId = $organizationId;
+        service('tenantContext')->setTenantId($tenantId);
     }
 
     public static function get(): ?int
     {
-        return self::$organizationId;
-    }
-
-    public static function require(): int
-    {
-        if (!self::$organizationId) {
-            throw new RuntimeException('Tenant not initialized');
-        }
-
-        return self::$organizationId;
-    }
-
-    public static function organizationId(): int
-    {
-        return self::require();
-    }
-
-    public static function user(): ?User
-    {
-        // SAFE fallback (no fatal dependency on auth())
-        if (self::$user) {
-            return self::$user;
-        }
-
-        if (function_exists('auth')) {
-            $auth = auth();
-            return $auth ? $auth->user() : null;
-        }
-
-        return null;
+        return service('tenantContext')->tenantId();
     }
 
     public static function hasTenant(): bool
     {
-        return self::$organizationId !== null;
+        return service('tenantContext')->hasTenant();
     }
 
     public static function clear(): void
     {
-        self::$organizationId = null;
-        self::$user = null;
+        service('tenantContext')->clear();
     }
 }

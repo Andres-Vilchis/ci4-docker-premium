@@ -69,6 +69,8 @@ migrate:
 
 migrate-status:
 	docker compose exec php php spark migrate:status
+db-reset:
+	docker compose exec php php spark migrate:refresh
 
 db-reset-safe:
 	@if [ "$(APP_ENV)" = "production" ]; then \

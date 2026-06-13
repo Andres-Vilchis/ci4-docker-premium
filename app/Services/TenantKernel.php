@@ -7,18 +7,19 @@ class TenantKernel
     public static function boot(): void
     {
         $tenantId = session()->get('active_organization_id');
+        $user = auth()->user();
 
-        if (!$tenantId) {
+        if (!$tenantId || !$user) {
             return;
         }
 
-        TenantContextService::set(
-            (int) $tenantId
-        );
+        service('tenantContext')
+            ->setTenantId((int) $tenantId)
+            ->setUser($user);
     }
 
     public static function requireTenant(): int
     {
-        return TenantContextService::require();
+        return service('tenantContext')->requireTenantId();
     }
 }

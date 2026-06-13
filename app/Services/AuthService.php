@@ -23,6 +23,9 @@ class AuthService
 
         $this->users->save($user);
 
-        return $this->users->findById($this->users->getInsertID());
+        $created = $this->users->findById($this->users->getInsertID());
+
+        // optional: future hook for org assignment
+        return $created;
     }
 }

@@ -5,9 +5,6 @@ namespace App\Filters;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Filters\FilterInterface;
-use App\Services\TenantContextService;
-use App\Services\TenantSessionService;
-use App\Observability\Context\RequestContext;
 
 class TenantFilter implements FilterInterface
 {
@@ -15,19 +12,9 @@ class TenantFilter implements FilterInterface
     {
         $path = trim($request->getUri()->getPath(), '/');
 
-        $publicRoutes = [
-            '',
-            'health',
-            'login',
-            'register',
-            'post-login',
-        ];
+        $publicRoutes = ['', 'health', 'login', 'register', 'post-login'];
 
         if (in_array($path, $publicRoutes, true)) {
-            return null;
-        }
-
-        if (!function_exists('auth')) {
             return null;
         }
 
@@ -37,21 +24,21 @@ class TenantFilter implements FilterInterface
             return redirect()->to('/login');
         }
 
-        $orgId = TenantSessionService::get();
+        $orgId = session()->get('active_organization_id');
 
         if (!$orgId) {
             return redirect()->to('/post-login');
         }
 
-        TenantContextService::boot($orgId, $auth->user());
-        RequestContext::$tenantId = $orgId;
-        RequestContext::$userId = $auth->user()->id ?? null;
+        service('tenantContext')
+            ->setTenantId((int) $orgId)
+            ->setUser($auth->user());
 
         return null;
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        return null;
+        service('tenantContext')->clear();
     }
 }

@@ -25,7 +25,7 @@ class Filters extends BaseFilters
         'secureheaders' => SecureHeaders::class,
         'auth'          => AuthFilter::class,
         'session'       => SessionAuth::class,
-        
+
         'tenant'        => \App\Filters\TenantFilter::class,
         'tenantRate'    => \App\Filters\TenantRateLimitFilter::class,
         'apiTenant'     => \App\Filters\ApiTenantAuthFilter::class,
@@ -33,21 +33,13 @@ class Filters extends BaseFilters
     ];
 
     public array $required = [
-        'before' => [
-            'forcehttps',
-            'pagecache',
-        ],
-        'after' => [
-            'pagecache',
-            'performance',
-            'toolbar',
-        ],
+        'before' => ['forcehttps', 'pagecache'],
+        'after'  => ['pagecache', 'performance', 'toolbar'],
     ];
 
     public array $globals = [
         'before' => [
             'invalidchars',
-            'observability',
             'tenant' => [
                 'except' => [
                     'health',
@@ -59,8 +51,8 @@ class Filters extends BaseFilters
                     'post-login',
                 ],
             ],
+            'observability',
         ],
-
         'after' => [
             'secureheaders',
         ],
@@ -70,29 +62,16 @@ class Filters extends BaseFilters
 
     public array $filters = [
         'auth' => [
-            'before' => [
-                'admin/*',
-            ],
+            'before' => ['admin/*'],
         ],
-
         'session' => [
-            'before' => [
-                'admin/*',
-            ],
+            'before' => ['admin/*'],
         ],
-
         'tenantRate' => [
-            'before' => [
-                '*',
-                '!health',
-                '!health/*',
-            ],
+            'before' => ['*', '!health', '!health/*'],
         ],
-
         'apiTenant' => [
-            'before' => [
-                'api/*',
-            ],
+            'before' => ['api/*'],
         ],
     ];
 }
